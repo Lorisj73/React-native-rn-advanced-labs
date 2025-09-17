@@ -57,6 +57,15 @@ export default function MainTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="tp4b-robots-rtk"
+        options={{
+          title: 'Robots RTK',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="tp2-navigation"
         options={{ href: null }}
       />
@@ -66,6 +75,14 @@ export default function MainTabsLayout() {
       />
       <Tabs.Screen
         name="tp4A-robots/edit/[id]"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="tp4b-robots-rtk/create"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="tp4b-robots-rtk/edit/[id]"
         options={{ href: null }}
       />
       {/* Masquer tout le dossier detail/ des Tabs; le header sera géré par detail/_layout.tsx */}
