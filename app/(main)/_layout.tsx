@@ -47,6 +47,27 @@ export default function MainTabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="tp4A-robots"
+        options={{
+          title: 'Robots',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape.2" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tp2-navigation"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="tp4A-robots/create"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="tp4A-robots/edit/[id]"
+        options={{ href: null }}
+      />
       {/* Masquer tout le dossier detail/ des Tabs; le header sera géré par detail/_layout.tsx */}
       <Tabs.Screen name="(detail)" options={{ href: null }} />
     </Tabs>
