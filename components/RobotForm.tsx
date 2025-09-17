@@ -1,27 +1,21 @@
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { createRobot, updateRobot } from '@/features/robots/robotsSlice';
+import { selectRobotById } from '@/features/robots/selectors';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Picker } from '@react-native-picker/picker';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRobotsStore } from '../store/robotStore';
 import { RobotFormValues, robotSchema } from '../validation/robotSchema';
 
-interface RobotFormProps {
-  mode: 'create' | 'edit';
-  robotId?: string; // required in edit
-  defaultValues?: Partial<RobotFormValues>;
-  onSuccess?: () => void;
-}
+interface RobotFormProps { mode: 'create' | 'edit'; robotId?: string; defaultValues?: Partial<RobotFormValues>; onSuccess?: () => void; }
 
 export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValues, onSuccess }) => {
-  const create = useRobotsStore(s => s.create);
-  const update = useRobotsStore(s => s.update);
-  const getById = useRobotsStore(s => s.getById);
+  const dispatch = useAppDispatch();
+  const robot = useAppSelector(selectRobotById(robotId));
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const robot = mode === 'edit' && robotId ? getById(robotId) : undefined;
 
   // Refs pour navigation & scroll
   const scrollRef = useRef<ScrollView | null>(null);
@@ -77,11 +71,8 @@ export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValu
     setSubmitSuccess(false);
     try {
       const payload = { name: values.name.trim(), label: values.label.trim(), year: Number(values.year), type: values.type } as const;
-      if (mode === 'create') {
-        create(payload);
-      } else if (mode === 'edit' && robotId) {
-        update(robotId, payload);
-      }
+      if (mode === 'create') dispatch(createRobot({ id: '', ...payload } as any));
+      else if (mode === 'edit' && robotId) dispatch(updateRobot({ id: robotId, changes: payload }));
       setSubmitSuccess(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       onSuccess?.();

@@ -6,6 +6,9 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor, store } from './store';
 
 const LAST_PATH_KEY = 'LAST_VISITED_PATH';
 
@@ -64,14 +67,17 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <NavigationPersistence>
-        {/* Stack global: (main) est l'entrée principale */}
-        <Stack>
-          <Stack.Screen name="(main)" options={{ headerShown: false }} />
-        </Stack>
-      </NavigationPersistence>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Provider store={store}>
+      <PersistGate persistor={persistor} loading={null}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <NavigationPersistence>
+            <Stack>
+              <Stack.Screen name="(main)" options={{ headerShown: false }} />
+            </Stack>
+          </NavigationPersistence>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </PersistGate>
+    </Provider>
   );
 }

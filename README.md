@@ -364,3 +364,142 @@ Cette section documente précisément le module Robots (CRUD) : architecture, fl
 
 ---
 Fin section description détaillée Robots.
+
+## TP4B – Module Robots (Redux Toolkit + Persist)
+
+Cette section documente la variante Redux Toolkit (comparative à la version Zustand TP4A).
+
+### 1. Objectifs
+- Reproduire le CRUD Robots avec Redux Toolkit + redux-persist.
+- Montrer les différences structurelles vs Zustand (organisation slice, selectors mémorisés, middleware).
+- Introduire un thunk asynchrone (saveRobotAsync) pour illustrer un flux async (simulateur de latence 500 ms – non encore branché au formulaire mais prêt à l'emploi).
+
+### 2. Dépendances & rôles
+| Package | Rôle | Notes |
+|---------|------|-------|
+| @reduxjs/toolkit | Configuration store, createSlice, createAsyncThunk | Simplifie reducers & immutabilité via immer |
+| react-redux | Hooks useSelector / useDispatch typés | Fournit le Provider racine |
+| redux-persist | Persistance robots[] dans AsyncStorage | Clé: root – whitelist:['robots'] |
+| @react-native-async-storage/async-storage | Backend stockage persistant | Utilisé aussi par Zustand dans TP4A |
+| react-hook-form + zod | Même stack formulaire que TP4A (réutilisation RobotForm) | Validation instantanée |
+| react-native-safe-area-context | Gestion SafeArea (liste Robots RTK) | Pour éviter chevauchement status bar |
+
+(Remarque: uuid est présent dans package.json mais n'est plus utilisé en TP4B – ID custom generateId(), on peut retirer la dépendance.)
+
+### 3. Arborescence spécifique
+```text
+features/
+  robots/
+    robotsSlice.ts      # Slice RTK + reducers CRUD + thunk saveRobotAsync
+    selectors.ts        # Sélecteurs mémorisés (tri nom / année + factory)
+app/
+  store.ts              # configureStore + persistReducer + serializableCheck off (persist)
+  rootReducer.ts        # combineReducers({ robots })
+  (main)/tp4b-robots-rtk/
+    index.tsx           # Liste + toggle tri (Nom / Année)
+    create.tsx          # Formulaire mode create
+    edit/[id].tsx       # Formulaire mode edit
+```
+
+### 4. Routes
+| Fichier | Route | Visible onglet | Description |
+|---------|-------|----------------|-------------|
+| (main)/tp4b-robots-rtk/index.tsx | /tp4b-robots-rtk | Oui (label: Robots RTK) | Liste triable |
+| (main)/tp4b-robots-rtk/create.tsx | /tp4b-robots-rtk/create | Non (href null) | Création |
+| (main)/tp4b-robots-rtk/edit/[id].tsx | /tp4b-robots-rtk/edit/:id | Non | Édition |
+
+### 5. State & reducers (résumé logique)
+State robotsSlice:
+```ts
+interface RobotsState {
+  items: Robot[];
+  saving: boolean;   // (réservé pour usage futur avec saveRobotAsync)
+  error?: string | null;
+}
+```
+Actions synchrones:
+- createRobot(Robot) : validation + unicité name (case-insensitive) → push.
+- updateRobot({id, changes}) : validation + collision name.
+- deleteRobot(id).
+- clearAll().
+
+Thunk:
+- saveRobotAsync({ id?, data }): simule une sauvegarde asynchrone (500 ms) puis dispatch create/update.
+
+### 6. Validation (double couche)
+Même règles que TP4A :
+- name: min 2 caractères, unique (case-insensitive).
+- label: min 3 caractères.
+- year: entier entre 1950 et année courante.
+- type: enum ('industrial' | 'service' | 'medical' | 'educational' | 'other').
+
+Couches:
+1. Formulaire (Zod) : feedback immédiat champ par champ.
+2. Slice (assertValid + vérif unicité) : filet de sécurité (empêche contournement via dispatch manuel / import batch futur).
+
+### 7. Stratégie d'ID
+- Abandon de uuid (nécessite crypto.getRandomValues sur certaines plateformes) → generateId() (timestamp + random base36) suffisant pour identifiants locaux.
+
+### 8. Sélecteurs & Tri
+Selectors:
+- selectRobots : liste brute.
+- selectRobotById(id).
+- selectRobotsSortedByName / selectRobotsSortedByYear.
+- makeSelectRobotsSorted(sort) : factory permettant un mémo par instance d'écran selon critère ('name' | 'year').
+
+UI liste:
+- Toggle de tri (Nom / Année) barre pill.
+- SafeAreaView + padding top pour éviter dépassement en haut (status bar / notch).
+
+### 9. Formulaire (RobotForm réutilisé)
+- Mode 'create' ou 'edit' (prop mode + robotId).
+- RHF mode: onChange → bouton (Créer / Mettre à jour) activé seulement si form valide.
+- Navigation focus: Name → Label → Year → Type (Picker) → Submit.
+- Scroll assisté sur focus + footer fixe.
+- Haptics succès / erreur (expo-haptics).
+
+### 10. Différences clés RTK vs Zustand (dans ce projet)
+| Aspect | Zustand (TP4A) | RTK (TP4B) |
+|--------|----------------|------------|
+| Boilerplate | Minimal (store inline) | Slice + rootReducer + store + persist config |
+| Persistance | Middleware persist (Zustand) | redux-persist + wrapper reducer |
+| Async flow exemple | Non (create/update sync) | Thunk saveRobotAsync disponible |
+| Sélecteurs mémo | Optionnel (non utilisé) | createSelector pour tri stable |
+| Ergonomie devtools | Simple (log state) | Redux DevTools possible (web) |
+| Apprentissage | Rapide | Plus formel (actions/types) |
+
+### 11. Tests manuels exécutés (résultats)
+| Cas | Étapes | Résultat |
+|-----|--------|----------|
+| Create succès | Ouvrir + → remplir valeurs valides → Créer | Robot ajouté, tri réappliqué, message "Enregistré ✅" |
+| Create échec name dupliqué | Créer A puis recréer A | Message erreur "Name déjà utilisé", pas d'ajout |
+| Create échec year invalide | Year = 1900 | Erreur validation (bouton désactivé tant que non corrigé) |
+| Edit succès | Tap robot → modifier label → Mettre à jour | Retour auto, item mis à jour (ordre tri éventuellement changé) |
+| Edit collision name | Editer robot B en nom déjà existant A | Erreur store capturée, valeurs conservées |
+| Delete | Bouton Delete item (Zustand version) / (RTK version via ajout futur) | Suppression OK (RTK: deleteRobot à ajouter sur item si besoin) |
+| Persist | Créer 2 robots → fermer complètement → relancer | Les 2 présents (redux-persist) |
+| Tri | Basculer Nom ⇄ Année | Liste réordonnée instantanément |
+| Safe Area | Ouvrir liste sur appareil notch | Aucune superposition en haut |
+
+(Remarque: suppression côté RTK utilise actuellement RobotListItem commun si relié à deleteRobot – si non encore branché, ajouter dispatch deleteRobot.)
+
+### 12. Améliorations futures
+- Connecter saveRobotAsync au formulaire pour afficher état saving + loader.
+- Ajout deleteRobot dans la version RTK (si absent) avec confirmation Alert.
+- Recherche textuelle + mémo (selector paramétré). 
+- Tests unitaires slice (création, update, collisions) via Jest.
+- Suppression dépendance uuid dans package.json (npm remove uuid).
+- Internationalisation labels tri & messages.
+- Intégrer toast global (succès / suppression) pour cohérence UX.
+
+### 13. Commandes utiles
+```
+# Lancer (reset cache) :
+npx expo start -c
+# Retirer uuid (optionnel après merge):
+npm remove uuid
+```
+
+---
+Fin section TP4B.
+````
