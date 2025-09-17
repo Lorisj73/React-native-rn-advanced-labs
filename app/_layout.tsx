@@ -9,22 +9,31 @@ import 'react-native-reanimated';
 
 const LAST_PATH_KEY = 'LAST_VISITED_PATH';
 
+function normalizePath(p?: string | null) {
+  if (!p || p === '/' || p === '') return '/home';
+  return p;
+}
+
 function NavigationPersistence({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [restored, setRestored] = React.useState(false);
+  const triedRef = React.useRef(false);
 
   React.useEffect(() => {
+    if (triedRef.current) return; // sécurité multi-mount (Fast Refresh / StrictMode)
+    triedRef.current = true;
     (async () => {
       try {
-        const saved = await AsyncStorage.getItem(LAST_PATH_KEY);
-        if (saved && saved !== pathname) {
-          // Validation simple: ne restaurer que si commence par /(
-          if (saved.startsWith('/')) {
-            router.replace(saved as any);
-          }
+        const savedRaw = await AsyncStorage.getItem(LAST_PATH_KEY);
+        const saved = normalizePath(savedRaw);
+        const current = normalizePath(pathname);
+        // Ne restaurer que si on démarre réellement sur la racine ("/" ou initial) ET qu'on a un chemin différent
+        const startingFromRoot = pathname === '/' || pathname === '' || pathname === undefined;
+        if (saved && saved !== current && startingFromRoot) {
+          router.replace(saved as any);
         }
       } catch (e) {
-        // Silencieux
+        // noop
       } finally {
         setRestored(true);
       }
@@ -32,10 +41,12 @@ function NavigationPersistence({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    if (pathname) {
-      AsyncStorage.setItem(LAST_PATH_KEY, pathname).catch(() => {});
+    if (!restored) return; // attendre la phase de restauration
+    const toStore = normalizePath(pathname);
+    if (toStore && toStore !== '/home') { // on peut aussi décider de stocker /home; ici on évite spam
+      AsyncStorage.setItem(LAST_PATH_KEY, toStore).catch(() => {});
     }
-  }, [pathname]);
+  }, [pathname, restored]);
 
   if (!restored) {
     return (
@@ -58,7 +69,6 @@ export default function RootLayout() {
         {/* Stack global: (main) est l'entrée principale */}
         <Stack>
           <Stack.Screen name="(main)" options={{ headerShown: false }} />
-          {/* <Stack.Screen name="(detail)" options={{ headerShown: false }} /> */}
         </Stack>
       </NavigationPersistence>
       <StatusBar style="auto" />

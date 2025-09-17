@@ -1,8 +1,8 @@
-import React from "react";
-import { Tabs } from "expo-router";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Tabs } from "expo-router";
+import React from "react";
 
 /**
  * Layout du groupe (main): utilise un Stack global.
@@ -35,6 +35,15 @@ export default function MainTabsLayout() {
           title: "TP1",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="TP3-forms"
+        options={{
+          title: "TP3-forms",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="square.and.pencil" color={color} />
           ),
         }}
       />
