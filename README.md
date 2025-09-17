@@ -251,3 +251,116 @@ RHF (extrait console):
 
 ---
 Fin section comparaison TP3.
+
+## 7) Tests manuels
+
+- Create :
+  - succès → nouvel item apparaît immédiatement dans la liste (tri respecté),
+  - échec (name dupliqué, year hors bornes, champs trop courts) → messages d’erreur, aucun ajout.
+- Edit :
+  - ouvrir un robot → modifier label et/ou type → sauvegarder → retour auto → item mis à jour sans reload.
+  - tentative de changer name en un doublon → erreur affichée, valeurs conservées.
+- Delete :
+  - appui sur Delete → alerte confirmation → confirmer → item disparaît → feedback visuel (liste réordonnée).
+- Persistance :
+  - créer 2 robots → fermer totalement l’app → relancer → les 2 robots sont toujours présents.
+- UX :
+  - clavier n’écrase pas les champs ni le bouton (scroll auto vers champ suivant),
+  - bouton submit désactivé tant que le formulaire est invalide,
+  - focus / Next du clavier enchaîne bien Name → Label → Year → Type,
+  - bouton toujours visible grâce au footer fixe.
+
+## 8) Module Robots – Description détaillée du fonctionnement
+
+Cette section documente précisément le module Robots (CRUD) : architecture, flux, règles métier, persistance et UX.
+
+### 8.1 Flux utilisateur
+1. Liste (onglet Robots) : affichage des robots triés (par nom ou année via toggle). Bouton flottant + pour créer.
+2. Création : formulaire validé en temps réel. Bouton Créer activé uniquement si valide. Retour automatique vers la liste après succès (optimistic update immédiate).
+3. Édition : accès via bouton Edit ou tap sur un item. Formulaire pré-rempli, même composant que la création (mode = 'edit').
+4. Suppression : bouton Del → alerte de confirmation → suppression instantanée + re-tri dynamique.
+5. Persistance : quitter / relancer l’app → les robots restent (storage AsyncStorage via middleware persist de Zustand).
+
+### 8.2 Architecture technique
+- Composants principaux :
+  - RobotListItem : rendu d’un robot + actions locales.
+  - RobotForm : unique formulaire réutilisé (create / edit) avec React Hook Form + Zod.
+- Store global : store/robotStore.ts (Zustand) :
+  - State : robots[], selectedId (optionnel).
+  - Actions : create, update, remove, getById, clearAll.
+  - Middleware : persist (createJSONStorage → AsyncStorage).
+  - Validation métier côté store (double barrière : formulaire + store).
+- Validation formulaire : validation/robotSchema.ts (Zod) + coercion du year.
+
+### 8.3 Règles métier appliquées
+- name : min 2 caractères, unique (comparaison case-insensitive). Testé avant insertion / update.
+- label : min 3 caractères.
+- year : entier entre 1950 et année courante (coercion depuis saisie texte → number ; revalidation dynamique).
+- type : enum restreinte.
+- Toute violation dans le store lève une Error attrapée dans RobotForm (affichage message + haptique erreur).
+
+### 8.4 Unicité du name – double validation
+- Côté UI : on valide la longueur seulement (unicité potentiellement ajoutable en live mais non indispensable).
+- Côté store : test final avant persist, empêche collision en cas d’accès concurrent (théorique) ou bypass.
+
+### 8.5 Persistance
+- Zustand persist sérialise { robots, selectedId } sous la clé 'robots-store-v1'.
+- Migrations : hook migrate prêt (placeholder) pour évoluer le format.
+- ID : génération maison (timestamp + random base36) évite dépendance uuid et problèmes crypto sur certaines plateformes.
+
+### 8.6 Navigation (Expo Router)
+- Routes:
+  - /(main)/tp4A-robots → liste.
+  - /(main)/tp4A-robots/create → création (masquée de la barre d’onglets via href: null).
+  - /(main)/tp4A-robots/edit/[id] → édition (masquée idem).
+- Onglets parasites (create / edit / tp2-navigation) retirés avec options { href: null }.
+- Retour : router.back() après succès create/update.
+
+### 8.7 Formulaire & UX
+- React Hook Form (mode onChange) + zodResolver.
+- Auto-scroll / focus chain : Name → Label → Year → Type (Picker) → bouton footer.
+- ScrollView + tracking positions (onLayout) pour aligner le champ courant dans la zone visible.
+- KeyboardAvoidingView + footer fixe : bouton jamais masqué.
+- Bouton désactivé tant que !isValid ou isSubmitting.
+- Feedback succès : texte "Enregistré ✅" + haptique medium.
+- Feedback erreur : message d’erreur + haptique error.
+
+### 8.8 Tri dynamique
+- State local sortBy (name | year).
+- useMemo([...robots].sort(...)) pour recalculer uniquement quand robots ou critère changent.
+- Re-tri automatique après chaque mutation (create/update/delete) grâce à dérivation du state robots.
+
+### 8.9 Stratégie d’erreurs
+- Form errors (validation schéma) : messages sous label.
+- Erreurs métier store (unicité name) : catch → message global (boîte rouge) → n’affecte pas les autres champs.
+- Aucune modale bloquante côté formulaire pour conserver la fluidité.
+
+### 8.10 Séparation responsabilités
+| Couche | Rôle |
+|--------|------|
+| Formulaire (RobotForm) | Gestion UI, validation de forme (types / limites), UX focus & scroll |
+| Store (Zustand) | Source de vérité, persistance, règles métier finales, unicité name |
+| Schéma Zod | Contrat d’entrée standardisé, coercion year |
+
+### 8.11 Choix techniques & justifications
+- Zustand + persist : léger, simple, évite boilerplate Redux / context.
+- RHF + Zod : meilleure perf/rerenders pour mobile, typage strict, coercion intégrée.
+- Pas de Controller RHF custom : champs simples (TextInput) suffisent, code plus clair pour apprentissage.
+- ID custom vs uuid : supprime dépendance crypto non nécessaire.
+- Double validation (UI + store) : robuste contre scénarios edge (ex: future import JSON / batch).
+
+### 8.12 Limitations actuelles
+- Pas de filtrage / recherche textuelle (ajout facile via state local et robots filtrés).
+- Pas d’animation suppression (peut ajouter LayoutAnimation ou Reanimated plus tard).
+- Pas de test automatisé (uniquement tests manuels documentés). 
+- Unicité name non validée en direct tant que l’utilisateur n’a pas soumis (peut implémenter un watch + setError). 
+
+### 8.13 Pistes d’amélioration
+- Ajouter toast/snackbar global (expo-toast ou lib custom) pour succès/suppression.
+- Ajouter mémorisation du dernier tri (persist local). 
+- Intégrer un champ de recherche live (debounce) sur la liste.
+- Internationalisation (fr/en) via i18n-js ou lingui.
+- Tests unitaires du store (Jest) + tests E2E (Detox) pour les flux CRUD.
+
+---
+Fin section description détaillée Robots.

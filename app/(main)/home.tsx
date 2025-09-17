@@ -20,6 +20,9 @@ export default function HomeScreen() {
       <Link href={{ pathname: '/(detail)/43'}} style={[styles.link, { color: palette.tint }]}>
         Voir le détail #43
       </Link>
+      <Link href={{ pathname: '/(main)/tp4A-robots'}} style={[styles.link, { color: palette.tint }]}>
+        TP Robots (liste)
+      </Link>
       {/* Boutons TP3 retirés */}
     </View>
   );
