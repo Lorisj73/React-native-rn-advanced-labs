@@ -73,3 +73,14 @@ J'ai ce message qui s'affiche, j'ai l'impression qu'il utilise expo-router par d
 Nouvelle demande:
 
 attend refait les modifs que tu avais faites la, j'ai remis le dossier tabs
+
+---
+
+## 2025-10-07
+Nouvelle demande:
+
+@agent Continue: "Continue to iterate?"
+
+Réponse (courte):
+En attente de précisions sur le périmètre à itérer (ex: TP4 robots, TP5 DB, TP6 caméra, navigation, tests).
+````

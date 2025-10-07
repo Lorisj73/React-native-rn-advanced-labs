@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from './store';
@@ -72,14 +73,16 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate persistor={persistor} loading={null}>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <NavigationPersistence>
-              <Stack>
-                <Stack.Screen name="(main)" options={{ headerShown: false }} />
-              </Stack>
-            </NavigationPersistence>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+          <SafeAreaProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <NavigationPersistence>
+                <Stack>
+                  <Stack.Screen name="(main)" options={{ headerShown: false }} />
+                </Stack>
+              </NavigationPersistence>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </SafeAreaProvider>
         </QueryClientProvider>
       </PersistGate>
     </Provider>

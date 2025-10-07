@@ -98,6 +98,7 @@ app/
     tp2-navigation/            # Placeholder prochain TP
 ```
 
+
 ### 🗂 Arborescence détaillée (mise à jour)
 ```text
 app/
@@ -561,3 +562,108 @@ Fin section TP4B.
 
 ---
 Fin section tests manuels détaillés.
+
+## TP6 — Camera (capture, stockage local, galerie)
+
+0) Pré-requis & périmètre
+- Projet Expo + Expo Router opérationnel.
+- Pas d’enregistrement dans la galerie système (on reste dans l’app: DocumentDirectory / cache).
+- Pas de back-end: 100% offline/local.
+
+1) Dépendances
+- expo-camera: accès caméra, aperçu temps réel, capture d’images, gestion des permissions caméra au runtime.
+- expo-file-system: lecture/écriture/suppression de fichiers dans le sandbox de l’app (ex: documentDirectory/photos/).
+- (Optionnel) expo-media-library: permet d’enregistrer aussi dans la galerie système. Non requis pour ce TP.
+
+2) Permissions
+- iOS: NSCameraUsageDescription dans app.json/app.config.ts pour expliquer l’usage.
+- Android: permission CAMERA déclarée dans la config.
+- Runtime: demander au moment d’entrer sur l’écran Caméra. En cas de refus: UI explicite + bouton “Ouvrir les réglages”.
+
+3) Architecture
+app/(main)/TP6-camera/
+  index.tsx            # Galerie (grille de miniatures)
+  camera.tsx           # Écran de prise de vue
+  detail/[id].tsx      # Détail (afficher, supprimer, partager)
+  lib/
+    camera/
+      storage.ts       # savePhoto, listPhotos, getPhoto, deletePhoto
+      types.ts         # type Photo: { id, uri, createdAt, size? }
+    hooks/
+      useCameraPermission.ts # hook permission caméra
+
+Contraintes
+- Aucun accès direct à FileSystem depuis les écrans: passer par lib/camera/storage.ts.
+- Les écrans gèrent l’UI/flux, pas l’IO.
+
+4) Capture & enregistrement local
+- Caméra: aperçu temps réel, bascule avant/arrière, bouton capture.
+- Après capture: copie du fichier vers photos/ avec un nom photo_<timestamp>.jpg puis retour vers la Galerie + feedback.
+- Métadonnées minimales: id (nom sans extension), uri, createdAt (timestamp), size (bytes si dispo).
+
+5) Galerie (liste)
+- Scanne le dossier photos/ pour lister les fichiers image.
+- Grille responsive de miniatures. Tap → Détail (/TP6-camera/detail/[id]).
+- Bouton “Prendre une photo” → /TP6-camera/camera.
+- Pull-to-refresh (ou bouton) pour rescanner.
+
+Critères d’acceptation
+- La galerie se met à jour automatiquement après une capture (retour de l’écran Caméra).
+- Les miniatures s’affichent sans bloquer l’UI (si besoin: images compressées/cache).
+
+### 9) Qualité & architecture
+
+- Service unique de stockage: app/(main)/TP6-camera/lib/camera/storage.ts
+  - API exposée:
+    - ensureDir(): prépare le dossier local photos/ (création récursive).
+    - savePhoto(base64|tempUri): enregistre une photo depuis une URI temporaire (file://) ou un payload base64. Retourne Photo { id, uri, createdAt, size, source }.
+    - listPhotos(): liste les photos locales triées par date desc.
+    - getPhoto(id): récupère une photo locale par id.
+    - deletePhoto(id): supprime physiquement le fichier (idempotent).
+    - (optionnel librairie) listLibraryPhotos(), getLibraryPhoto(id), deleteLibraryPhoto(id).
+  - Aucun accès direct à FileSystem depuis l'UI; les écrans consomment uniquement ces fonctions.
+
+- Gestion des erreurs (StorageError):
+  - WRITE_FAILED: "Impossible de préparer le dossier" / "Échec d'enregistrement de la photo (espace disque insuffisant ou fichier source invalide)".
+  - READ_FAILED: "Lecture de la galerie échouée" / "Photo enregistrée mais lecture des métadonnées échouée".
+  - DELETE_FAILED: "Suppression échouée".
+  - Les écrans attrapent et affichent les messages via Alert (ex: Galerie: Erreur; Caméra: Capture échouée; Détail: Suppression échouée).
+
+- Chemins de fichiers:
+  - Centralisés dans storage.ts (PHOTOS_DIR). L’UI n’utilise aucun chemin en dur.
+
+- Permissions & limites d’exécution:
+  - Caméra: demandée à l’entrée de l’écran.
+  - Photothèque (Android 13+): granularPermissions=['photo'].
+  - Expo Go Android: l’accès complet librairie est désactivé (message explicite); utiliser un Development Build pour tester.
+
+## 10) Tests manuels — à décrire dans le README
+
+1) Permissions
+- Ouvrir “TP6 Camera” → “Prendre une photo”.
+- Refuser la permission: afficher l’UI explicite (texte + boutons Autoriser / Réglages).
+- Accepter la permission: la prévisualisation caméra s’affiche et les boutons sont cliquables.
+
+2) Capture
+- Depuis l’écran Caméra, prendre 2 photos.
+- Retour automatique vers la Galerie: les 2 miniatures sont visibles et triées (la plus récente en premier).
+
+3) Détail
+- Taper une miniature → ouvrir l’écran Détail.
+- Vérifier l’affichage: photo plein écran + métadonnées (ID/nom, date, taille si dispo).
+
+4) Suppression
+- Dans Détail, appuyer “Supprimer” → confirmer.
+- Retour Galerie: la miniature a disparu.
+- Relancer la liste (pull-to-refresh): la photo n’est plus listée (fichier supprimé).
+
+5) Persistance
+- Fermer complètement l’app, puis relancer.
+- Ouvrir “TP6 Camera”: les photos précédemment enregistrées sont toujours listées.
+
+6) (Optionnel) Partage / Enregistrement dans la galerie système
+- Partage: bouton “Partager” → vérifier que la feuille de partage s’ouvre et que l’action aboutit.
+- Enregistrement (si activé): sauvegarder dans la galerie système et vérifier la présence dans Photos (nécessite permissions Media Library et build de dev sur Android).
+
+---
+Fin section tests manuels TP6.

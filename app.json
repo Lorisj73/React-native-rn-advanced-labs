@@ -9,9 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Cette application a besoin d'accéder à la caméra pour prendre des photos.",
+        "NSPhotoLibraryUsageDescription": "Cette application a besoin d'accéder à votre photothèque pour lister et sélectionner des photos.",
+        "NSPhotoLibraryAddUsageDescription": "Cette application peut enregistrer des photos dans votre photothèque si vous le souhaitez."
+      }
     },
     "android": {
+      "permissions": ["CAMERA"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -37,6 +43,14 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Autoriser $(PRODUCT_NAME) à accéder à vos photos.",
+          "savePhotosPermission": "Autoriser $(PRODUCT_NAME) à enregistrer des photos.",
+          "granularPermissions": ["photo"]
         }
       ]
     ],

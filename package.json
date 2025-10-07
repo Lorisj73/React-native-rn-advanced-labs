@@ -21,6 +21,7 @@
     "@reduxjs/toolkit": "^2.9.0",
     "@tanstack/react-query": "^5.90.2",
     "expo": "~54.0.7",
+    "expo-camera": "^17.0.8",
     "expo-constants": "~18.0.8",
     "expo-document-picker": "^14.0.7",
     "expo-file-system": "^19.0.16",
@@ -51,7 +52,8 @@
     "uuid": "^13.0.0",
     "yup": "^1.7.0",
     "zod": "^4.1.9",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "expo-media-library": "~18.2.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

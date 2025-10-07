@@ -72,6 +72,15 @@ export default function MainTabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="TP6-camera"
+        options={{
+          title: 'Camera',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="camera" color={color} />
+          ),
+        }}
+      />
 
       {/* Routes internes masquées des onglets */}
       <Tabs.Screen name="tp2-navigation" options={{ href: null }} />
@@ -81,6 +90,8 @@ export default function MainTabsLayout() {
       <Tabs.Screen name="tp4b-robots-rtk/edit/[id]" options={{ href: null }} />
       <Tabs.Screen name="TP5-robots-db/create" options={{ href: null }} />
       <Tabs.Screen name="TP5-robots-db/edit/[id]" options={{ href: null }} />
+      <Tabs.Screen name="TP6-camera/camera" options={{ href: null }} />
+      <Tabs.Screen name="TP6-camera/detail/[id]" options={{ href: null }} />
       <Tabs.Screen name="(detail)" options={{ href: null }} />
     </Tabs>
   );
