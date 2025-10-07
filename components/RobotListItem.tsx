@@ -1,25 +1,29 @@
-import { useAppDispatch } from '@/app/hooks';
-import { deleteRobot, Robot } from '@/features/robots/robotsSlice';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-interface Props { robot: Robot }
+export interface BasicRobot { id: string; name: string; label: string; year: number; type: string }
+
+interface Props {
+  robot: BasicRobot;
+  onDelete?: (id: string) => void;
+  editPathname?: string; // e.g. '/(main)/tp4b-robots-rtk/edit/[id]'
+}
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export const RobotListItem: React.FC<Props> = ({ robot }) => {
-  const dispatch = useAppDispatch();
+export const RobotListItem: React.FC<Props> = ({ robot, onDelete, editPathname = '/(main)/tp4b-robots-rtk/edit/[id]' }) => {
   const router = useRouter();
 
-  const onDelete = () => {
+  const confirmDelete = () => {
+    if (!onDelete) return;
     Alert.alert('Supprimer', `Supprimer ${robot.name} ?`, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => dispatch(deleteRobot(robot.id)) }
+      { text: 'Supprimer', style: 'destructive', onPress: () => onDelete(robot.id) }
     ]);
   };
 
-  const goEdit = () => router.push({ pathname: '/(main)/tp4b-robots-rtk/edit/[id]', params: { id: robot.id } });
+  const goEdit = () => router.push({ pathname: editPathname as any, params: { id: robot.id } });
 
   return (
     <Pressable style={({ pressed }) => [styles.container, pressed && styles.pressed]} onPress={goEdit}>
@@ -33,9 +37,11 @@ export const RobotListItem: React.FC<Props> = ({ robot }) => {
           <Pressable onPress={goEdit} style={({ pressed }) => [styles.actionBtn, pressed && styles.actionPressed]}>
             <Text style={styles.actionText}>Edit</Text>
           </Pressable>
-          <Pressable onPress={onDelete} style={({ pressed }) => [styles.actionBtn, styles.deleteBtn, pressed && styles.actionPressed]}>
-            <Text style={styles.actionText}>Del</Text>
-          </Pressable>
+          {onDelete && (
+            <Pressable onPress={confirmDelete} style={({ pressed }) => [styles.actionBtn, styles.deleteBtn, pressed && styles.actionPressed]}>
+              <Text style={styles.actionText}>Del</Text>
+            </Pressable>
+          )}
         </View>
       </View>
       <Text style={styles.label}>{robot.label}</Text>

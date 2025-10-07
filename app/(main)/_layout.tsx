@@ -5,9 +5,7 @@ import { Tabs } from "expo-router";
 import React from "react";
 
 /**
- * Layout du groupe (main): utilise un Stack global.
- * - L'écran (tabs) contient les onglets Home et TP1
- * - L'écran detail/[id] est poussé au-dessus avec un bouton retour automatique
+ * Layout du groupe (main): tabs + routes masquées
  */
 export default function MainTabsLayout() {
   const colorScheme = useColorScheme();
@@ -50,7 +48,7 @@ export default function MainTabsLayout() {
       <Tabs.Screen
         name="tp4A-robots"
         options={{
-          title: 'Robots',
+          title: 'Robots (Zustand)',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="gearshape.2" color={color} />
           ),
@@ -66,26 +64,23 @@ export default function MainTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="tp2-navigation"
-        options={{ href: null }}
+        name="TP5-robots-db"
+        options={{
+          title: 'Robots DB',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="externaldrive" color={color} />
+          ),
+        }}
       />
-      <Tabs.Screen
-        name="tp4A-robots/create"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="tp4A-robots/edit/[id]"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="tp4b-robots-rtk/create"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="tp4b-robots-rtk/edit/[id]"
-        options={{ href: null }}
-      />
-      {/* Masquer tout le dossier detail/ des Tabs; le header sera géré par detail/_layout.tsx */}
+
+      {/* Routes internes masquées des onglets */}
+      <Tabs.Screen name="tp2-navigation" options={{ href: null }} />
+      <Tabs.Screen name="tp4A-robots/create" options={{ href: null }} />
+      <Tabs.Screen name="tp4A-robots/edit/[id]" options={{ href: null }} />
+      <Tabs.Screen name="tp4b-robots-rtk/create" options={{ href: null }} />
+      <Tabs.Screen name="tp4b-robots-rtk/edit/[id]" options={{ href: null }} />
+      <Tabs.Screen name="TP5-robots-db/create" options={{ href: null }} />
+      <Tabs.Screen name="TP5-robots-db/edit/[id]" options={{ href: null }} />
       <Tabs.Screen name="(detail)" options={{ href: null }} />
     </Tabs>
   );

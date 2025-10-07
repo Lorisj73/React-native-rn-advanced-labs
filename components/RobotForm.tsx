@@ -9,9 +9,15 @@ import { useForm } from 'react-hook-form';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { RobotFormValues, robotSchema } from '../validation/robotSchema';
 
-interface RobotFormProps { mode: 'create' | 'edit'; robotId?: string; defaultValues?: Partial<RobotFormValues>; onSuccess?: () => void; }
+interface RobotFormProps {
+  mode: 'create' | 'edit';
+  robotId?: string;
+  defaultValues?: Partial<RobotFormValues>;
+  onSuccess?: () => void;
+  onSubmitOverride?: (values: RobotFormValues) => Promise<void> | void; // for DB repo variant
+}
 
-export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValues, onSuccess }) => {
+export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValues, onSuccess, onSubmitOverride }) => {
   const dispatch = useAppDispatch();
   const robot = useAppSelector(selectRobotById(robotId));
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -71,8 +77,12 @@ export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValu
     setSubmitSuccess(false);
     try {
       const payload = { name: values.name.trim(), label: values.label.trim(), year: Number(values.year), type: values.type } as const;
-      if (mode === 'create') dispatch(createRobot({ id: '', ...payload } as any));
-      else if (mode === 'edit' && robotId) dispatch(updateRobot({ id: robotId, changes: payload }));
+      if (onSubmitOverride) {
+        await Promise.resolve(onSubmitOverride(payload as any));
+      } else {
+        if (mode === 'create') dispatch(createRobot({ id: '', ...payload } as any));
+        else if (mode === 'edit' && robotId) dispatch(updateRobot({ id: robotId, changes: payload }));
+      }
       setSubmitSuccess(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       onSuccess?.();
@@ -82,7 +92,7 @@ export const RobotForm: React.FC<RobotFormProps> = ({ mode, robotId, defaultValu
     }
   };
 
-  if (mode === 'edit' && robotId && !robot) {
+  if (!onSubmitOverride && mode === 'edit' && robotId && !robot) {
     return <View style={styles.container}><Text>Robot introuvable.</Text></View>;
   }
 
