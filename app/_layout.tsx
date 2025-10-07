@@ -1,6 +1,8 @@
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { queryClient } from '@/services/robotQueries';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
@@ -69,14 +71,16 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor} loading={null}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <NavigationPersistence>
-            <Stack>
-              <Stack.Screen name="(main)" options={{ headerShown: false }} />
-            </Stack>
-          </NavigationPersistence>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <NavigationPersistence>
+              <Stack>
+                <Stack.Screen name="(main)" options={{ headerShown: false }} />
+              </Stack>
+            </NavigationPersistence>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </QueryClientProvider>
       </PersistGate>
     </Provider>
   );

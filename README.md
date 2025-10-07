@@ -502,4 +502,62 @@ npm remove uuid
 
 ---
 Fin section TP4B.
-````
+
+## 10) Tests manuels (détaillés)
+
+1) Migrations (001 → 002 → 003)
+- Pré-requis: aucune donnée (désinstaller Expo Go ou Dev Menu → Clear data for experience), puis relancer l’app.
+- Étapes:
+  - Premier lancement: la base est créée (v1: table robots). Créer 1 robot de test (ex: "Alpha").
+  - Relancer l’app (cold start) pour s’assurer que les migrations s’appliquent séquentiellement (002 index, 003 colonne archived).
+- Attendu:
+  - L’app fonctionne sans crash ni réinitialisation des données.
+  - Les robots créés avant migrations sont toujours visibles.
+  - Optionnel: Exporter JSON et vérifier que chaque robot inclut archived (0/1) dans les données (si présent dans l’export selon implémentation).
+- Conseils:
+  - Si vous obtenez un écran vide, supprimer les données de l’expérience et relancer.
+
+2) CRUD complet
+- Créer:
+  - Ouvrir + → saisir Name: "R2D2", Label: "Astromech", Year: 1977, Type: service → Créer.
+  - Attendu: item apparaît en liste, tri respecté.
+- Modifier:
+  - Ouvrir R2D2 → changer Label: "Astromech Droid", Year: 1978 → Mettre à jour.
+  - Attendu: retour auto, valeurs mises à jour en liste.
+- Supprimer:
+  - Sur l’item, tap "Del" → confirmer.
+  - Attendu: l’item disparaît, la liste se re-trie si besoin.
+- Erreurs attendues:
+  - Name dupliqué: message d’erreur, aucune création.
+  - Year hors limites: validation bloque le submit.
+
+3) Persistance
+- Étapes:
+  - Créer 2 robots.
+  - Fermer complètement l’app (tuer Expo Go), relancer via `npx expo start -c` puis réouvrir.
+- Attendu: les 2 robots sont toujours affichés, sans action manuelle.
+
+4) Export JSON
+- Pré-requis: au moins 1 robot dans la liste.
+- Étapes:
+  - Tap "Export JSON".
+  - Une alerte affiche le chemin du fichier créé (file://…).
+- Attendu:
+  - Aucune erreur. L’alerte montre un chemin valide (documentDirectory ou cacheDirectory selon plateforme).
+  - Contenu: un objet avec "robots": [ … ]. La taille/longueur correspond aux robots affichés.
+- Vérifications rapides:
+  - Réexporter une seconde fois → un nouveau fichier est généré (nom daté différent).
+
+5) (Bonus) Import JSON
+- Pré-requis: un fichier précédemment exporté.
+- Étapes:
+  - Tap "Import JSON" → choisir le fichier exporté via le sélecteur.
+- Attendu:
+  - Message succès indiquant le nombre d’entrées traitées.
+  - Si un robot a le même name (insensible à la casse), ses champs (label/year/type) sont mis à jour, pas de doublon créé.
+  - Sinon, un nouveau robot est ajouté.
+- Erreurs possibles:
+  - Fichier invalide: alerte "Import échoué" avec le détail.
+
+---
+Fin section tests manuels détaillés.

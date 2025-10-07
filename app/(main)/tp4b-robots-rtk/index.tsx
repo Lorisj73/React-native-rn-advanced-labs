@@ -1,5 +1,6 @@
-import { useAppSelector } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import RobotListItem from '@/components/RobotListItem';
+import { deleteRobot } from '@/features/robots/robotsSlice';
 import { makeSelectRobotsSorted } from '@/features/robots/selectors';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -8,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RobotsListScreen() {
   const [sort, setSort] = useState<'name' | 'year'>('name');
+  const dispatch = useAppDispatch();
   const selector = useMemo(() => makeSelectRobotsSorted(sort), [sort]);
   const robots = useAppSelector(selector);
   const router = useRouter();
@@ -22,7 +24,13 @@ export default function RobotsListScreen() {
         data={robots}
         keyExtractor={item => item.id}
         contentContainerStyle={[robots.length === 0 ? styles.emptyContainer : styles.listContent, { paddingTop: 8 }]}
-        renderItem={({ item }) => <RobotListItem robot={item} />}
+        renderItem={({ item }) => (
+          <RobotListItem
+            robot={item}
+            onDelete={(id) => dispatch(deleteRobot(id))}
+            editPathname='/(main)/tp4b-robots-rtk/edit/[id]'
+          />
+        )}
         ListEmptyComponent={<Text style={styles.emptyText}>Aucun robot. Ajoutez-en un.</Text>}
       />
       <Pressable style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]} onPress={() => router.push('/(main)/tp4b-robots-rtk/create')}>

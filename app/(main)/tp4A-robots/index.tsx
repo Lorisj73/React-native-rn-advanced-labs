@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function RobotsListScreen() {
   const robots = useRobotsStore(s => s.robots);
   const clearAll = useRobotsStore(s => s.clearAll);
+  const remove = useRobotsStore(s => s.remove);
   const router = useRouter();
   const [sortBy, setSortBy] = useState<'name' | 'year'>('name');
   const sorted = useMemo(() => {
@@ -39,7 +40,13 @@ export default function RobotsListScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-          renderItem={({ item }) => <RobotListItem robot={item} />}
+          renderItem={({ item }) => (
+            <RobotListItem
+              robot={item}
+              onDelete={(id) => remove(id)}
+              editPathname='/(main)/tp4A-robots/edit/[id]'
+            />
+          )}
         />
       )}
 
